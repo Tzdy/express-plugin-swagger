@@ -20,8 +20,8 @@ describe("swagger", () => {
     const app = express();
     const router = Router();
     const deepRouter = Router();
-    router.use("/api", deepRouter);
-    app.use(router);
+    router.use("/deep", deepRouter);
+    app.use("/api", router);
     deepRouter.get(
       "/info",
       ExpressSwagger({
@@ -145,7 +145,7 @@ describe("swagger", () => {
             },
           },
         },
-        "/api/info": {
+        "/api/deep/info": {
           get: {
             tags: ["test"],
             parameters: [

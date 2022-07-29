@@ -20,12 +20,13 @@ export function createSwaggerDoc(
   const paths: PickItem<TySwaggerInternalOptions, "paths"> = {};
   const definitions: PickItem<TySwaggerInternalOptions, "definitions"> = {};
   function callback(router: any, base: string) {
+    console.log(router);
     router.stack.forEach((layer: any) => {
       if (layer.name === "router") {
         const match = (layer.regexp as RegExp).source.match(/^\^\\(.*?)\\/);
         if (match) {
           const prefix = match[1];
-          callback(layer.handle, prefix);
+          callback(layer.handle, join(base, prefix));
         }
       } else if (layer.route) {
         const lay = layer.route.stack.find((lay: any) => lay.handle.__data__);
