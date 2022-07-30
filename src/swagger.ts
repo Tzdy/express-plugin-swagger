@@ -60,26 +60,35 @@ export function createSwaggerDoc(
         routeOptions.summary && (httpConfig.summary = routeOptions.summary);
         routeOptions.tags && (httpConfig.tags = routeOptions.tags);
         // parameters
-        if (routeOptions.parameters && httpConfig) {
-          const parameters = routeOptions.parameters;
+        if (routeOptions.parameter && httpConfig) {
+          const parameter = routeOptions.parameter;
           httpConfig.parameters = [];
-          parameters.forEach((parameter, index) => {
-            const properties = Reflect.getMetadata(
-              METAKEY_PROPERTY,
-              parameter.dto
-            ) as Record<string, DefineProperty>;
-            definitions[parameter.dto.name] = {
-              type: "object",
-              properties,
-            };
-            const { dto, ...param } = parameter;
-            httpConfig.parameters![index] = {
+          const properties = Reflect.getMetadata(
+            METAKEY_PROPERTY,
+            parameter.dto
+          ) as Record<string, DefineProperty>;
+          definitions[parameter.dto.name] = {
+            type: "object",
+            properties,
+          };
+          const { dto, ...param } = parameter;
+          if (parameter.in === "body") {
+            httpConfig.parameters.push({
               ...param,
               schema: {
                 $ref: `#/definitions/${parameter.dto.name}`,
               },
-            };
-          });
+              name: dto.name,
+            });
+          } else {
+            for (const key of Object.keys(properties)) {
+              httpConfig.parameters.push({
+                name: key,
+                in: parameter.in,
+                ...properties[key],
+              });
+            }
+          }
         }
         // responses
         if (routeOptions.responses && httpConfig) {
@@ -116,8 +125,9 @@ export function createSwaggerDoc(
   return doc;
 }
 
-interface RouteSwaggerOptions extends HttpConfig {
-  parameters?: Array<{ dto: { new (): {} } } & Omit<Param, "schema" | "type">>;
+interface RouteSwaggerOptions
+  extends Omit<HttpConfig, "parameters" | "responses"> {
+  parameter?: { dto: { new (): {} } } & Omit<Param, "schema" | "type" | "name">;
   responses?: Record<
     string,
     { dto: { new (): {} } } & Omit<TySwagger.Response, "schema">

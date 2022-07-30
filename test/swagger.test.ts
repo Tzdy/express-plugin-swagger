@@ -45,13 +45,10 @@ describe("swagger", () => {
       "/info",
       ExpressSwagger({
         tags: ["test"],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            dto: A,
-          },
-        ],
+        parameter: {
+          in: "body",
+          dto: A,
+        },
         responses: {
           "200": {
             dto: B,
@@ -69,13 +66,10 @@ describe("swagger", () => {
       "/get/:id",
       ExpressSwagger({
         tags: ["test"],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            dto: A,
-          },
-        ],
+        parameter: {
+          in: "path",
+          dto: A,
+        },
         responses: {
           "200": {
             dto: B,
@@ -152,9 +146,7 @@ describe("swagger", () => {
         "/get/{id}": {
           get: {
             tags: ["test"],
-            parameters: [
-              { name: "id", in: "path", schema: { $ref: "#/definitions/A" } },
-            ],
+            parameters: [{ name: "id", in: "path", type: "string" }],
             responses: {
               "200": {
                 description: "如果成功就返回。",
@@ -174,7 +166,7 @@ describe("swagger", () => {
           get: {
             tags: ["test"],
             parameters: [
-              { name: "id", in: "path", schema: { $ref: "#/definitions/A" } },
+              { name: "A", in: "body", schema: { $ref: "#/definitions/A" } },
             ],
             responses: {
               "200": {
