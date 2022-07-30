@@ -11,7 +11,7 @@ import TySwagger, {
   TySwaggerUserOptions,
 } from "../types/swagger";
 import { join } from "path";
-const METAKEY_DEFINITION = "definition";
+const METAKEY_PROPERTY = "definition";
 
 export function createSwaggerDoc(
   app: Application,
@@ -20,7 +20,6 @@ export function createSwaggerDoc(
   const paths: PickItem<TySwaggerInternalOptions, "paths"> = {};
   const definitions: PickItem<TySwaggerInternalOptions, "definitions"> = {};
   function callback(router: any, base: string) {
-    console.log(router);
     router.stack.forEach((layer: any) => {
       if (layer.name === "router") {
         const match = (layer.regexp as RegExp).source.match(/^\^\\(.*?)\\/);
@@ -66,12 +65,11 @@ export function createSwaggerDoc(
           httpConfig.parameters = [];
           parameters.forEach((parameter, index) => {
             const properties = Reflect.getMetadata(
-              METAKEY_DEFINITION,
+              METAKEY_PROPERTY,
               parameter.dto
             ) as Record<string, DefineProperty>;
             definitions[parameter.dto.name] = {
               type: "object",
-              required: [],
               properties,
             };
             const { dto, ...param } = parameter;
@@ -90,12 +88,11 @@ export function createSwaggerDoc(
           Object.keys(responses).forEach((status) => {
             const response = responses[status];
             const properties = Reflect.getMetadata(
-              METAKEY_DEFINITION,
+              METAKEY_PROPERTY,
               response.dto
             ) as Record<string, DefineProperty>;
             definitions[response.dto.name] = {
               type: "object",
-              required: [],
               properties,
             };
             const { dto, ...res } = response;
@@ -120,7 +117,7 @@ export function createSwaggerDoc(
 }
 
 interface RouteSwaggerOptions extends HttpConfig {
-  parameters?: Array<{ dto: { new (): {} } } & Omit<Param, "schema">>;
+  parameters?: Array<{ dto: { new (): {} } } & Omit<Param, "schema" | "type">>;
   responses?: Record<
     string,
     { dto: { new (): {} } } & Omit<TySwagger.Response, "schema">
@@ -139,23 +136,30 @@ export function ExpressSwagger(options: RouteSwaggerOptions) {
   return ExpressSwaggerMiddleware;
 }
 
-export function ApiProperty(defineProperty: DefineProperty) {
+export function ApiProperty(
+  defineProperty: Omit<DefineProperty, "properties">
+) {
   return function (prototype: any, propKey: string) {
     const item = Reflect.getMetadata(
-      METAKEY_DEFINITION,
+      METAKEY_PROPERTY,
       prototype.constructor
     ) as Record<string, DefineProperty> | undefined;
+    const property: DefineProperty = {
+      ...defineProperty,
+    };
+    // 检查是否有嵌套情况
+    const subDto = Reflect.getMetadata("design:type", prototype, propKey);
+    const subProperties = Reflect.getMetadata(METAKEY_PROPERTY, subDto);
+    if (subProperties) {
+      property.properties = subProperties;
+    }
     if (item) {
-      item[propKey] = defineProperty;
+      item[propKey] = property;
     } else {
       const metaItem: Record<string, DefineProperty> = {
-        [propKey]: defineProperty,
+        [propKey]: property,
       };
-      Reflect.defineMetadata(
-        METAKEY_DEFINITION,
-        metaItem,
-        prototype.constructor
-      );
+      Reflect.defineMetadata(METAKEY_PROPERTY, metaItem, prototype.constructor);
     }
   };
 }

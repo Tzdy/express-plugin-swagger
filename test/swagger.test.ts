@@ -10,11 +10,30 @@ describe("swagger", () => {
       id: string = "";
     }
 
+    class Data {
+      @ApiProperty({
+        type: "string",
+      })
+      token: string;
+    }
+
     class B {
       @ApiProperty({
         type: "string",
       })
       resText: string = "";
+    }
+
+    class C {
+      @ApiProperty({
+        type: "string",
+      })
+      resText: string = "";
+
+      @ApiProperty({
+        type: "object",
+      })
+      data: Data;
     }
 
     const app = express();
@@ -65,6 +84,9 @@ describe("swagger", () => {
           "400": {
             dto: B,
             description: "账号或密码输入错误",
+          },
+          "401": {
+            dto: C,
           },
         },
       }),
@@ -142,6 +164,9 @@ describe("swagger", () => {
                 description: "账号或密码输入错误",
                 schema: { $ref: "#/definitions/B" },
               },
+              "401": {
+                schema: { $ref: "#/definitions/C" },
+              },
             },
           },
         },
@@ -167,13 +192,21 @@ describe("swagger", () => {
       definitions: {
         A: {
           type: "object",
-          required: [],
           properties: { id: { type: "string" } },
         },
         B: {
           type: "object",
-          required: [],
           properties: { resText: { type: "string" } },
+        },
+        C: {
+          type: "object",
+          properties: {
+            resText: { type: "string" },
+            data: {
+              type: "object",
+              properties: { token: { type: "string" } },
+            },
+          },
         },
       },
     };
