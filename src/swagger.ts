@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { Application, Request, Response, NextFunction } from "express";
 import TySwagger, {
   DefineProperty,
+  DefinePropertyOptions,
   HttpConfig,
   HttpMethod,
   Param,
@@ -148,22 +149,45 @@ export function ExpressSwagger(options: RouteSwaggerOptions) {
   return ExpressSwaggerMiddleware;
 }
 
-export function ApiProperty(
-  defineProperty: Omit<DefineProperty, "properties">
-) {
+export function ApiProperty(defineProperty: DefinePropertyOptions) {
   return function (prototype: any, propKey: string) {
     const item = Reflect.getMetadata(
       METAKEY_PROPERTY,
       prototype.constructor
     ) as Record<string, DefineProperty> | undefined;
-    const property: DefineProperty = {
-      ...defineProperty,
-    };
-    // 检查是否有嵌套情况
-    const subDto = Reflect.getMetadata("design:type", prototype, propKey);
-    const subProperties = Reflect.getMetadata(METAKEY_PROPERTY, subDto);
-    if (subProperties) {
-      property.properties = subProperties;
+    // items: __items, ref: __ref，这么写是为了排除items, ref两个属性，没有别的意思。
+    const { items: __items, ref: __ref, ...__property } = defineProperty;
+    const property: DefineProperty = __property;
+    // 如果是对象类型检查是否有嵌套情况
+    if (defineProperty.type === "object") {
+      const subDto = defineProperty.ref;
+      if (subDto) {
+        const subProperties = Reflect.getMetadata(METAKEY_PROPERTY, subDto);
+        if (subProperties) {
+          property.properties = subProperties;
+        }
+      }
+    } else if (defineProperty.type === "array") {
+      let items = defineProperty.items;
+      let loop_property = property;
+      while (items) {
+        // items: __items, ref: __ref，这么写是为了排除items, ref两个属性，没有别的意思
+        const { items: __items, ref: __ref, ...__property } = items;
+        loop_property.items = {
+          ...__property,
+        };
+        if (items.type === "object") {
+          const subDto = items.ref;
+          if (subDto) {
+            const subProperties = Reflect.getMetadata(METAKEY_PROPERTY, subDto);
+            if (subProperties) {
+              loop_property.items.properties = subProperties;
+            }
+          }
+        }
+        items = items.items;
+        loop_property = loop_property.items;
+      }
     }
     if (item) {
       item[propKey] = property;

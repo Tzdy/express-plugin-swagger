@@ -33,8 +33,44 @@ describe("swagger", () => {
 
       @ApiProperty({
         type: "object",
+        ref: Data,
       })
       data: Data;
+    }
+
+    class ArrayDto {
+      @ApiProperty({
+        type: "array",
+        items: {
+          type: "object",
+          ref: B,
+        },
+      })
+      array: Array<B>;
+    }
+
+    class ArrayStringDto {
+      @ApiProperty({
+        type: "array",
+        items: {
+          type: "string",
+        },
+      })
+      array: Array<string>;
+    }
+
+    class ArrayDeepDto {
+      @ApiProperty({
+        type: "array",
+        items: {
+          type: "array",
+          items: {
+            type: "object",
+            ref: B,
+          },
+        },
+      })
+      array: Array<Array<B>>;
     }
 
     const app = express();
@@ -60,6 +96,15 @@ describe("swagger", () => {
           "400": {
             dto: B,
             description: "账号或密码输入错误",
+          },
+          "401": {
+            dto: ArrayDto,
+          },
+          "402": {
+            dto: ArrayStringDto,
+          },
+          "403": {
+            dto: ArrayDeepDto,
           },
         },
       })
@@ -209,6 +254,15 @@ describe("swagger", () => {
                 description: "账号或密码输入错误",
                 schema: { $ref: "#/definitions/B" },
               },
+              "401": {
+                schema: { $ref: "#/definitions/ArrayDto" },
+              },
+              "402": {
+                schema: { $ref: "#/definitions/ArrayStringDto" },
+              },
+              "403": {
+                schema: { $ref: "#/definitions/ArrayDeepDto" },
+              },
             },
           },
         },
@@ -248,6 +302,52 @@ describe("swagger", () => {
             data: {
               type: "object",
               properties: { token: { type: "string" } },
+            },
+          },
+        },
+        ArrayDto: {
+          type: "object",
+          properties: {
+            array: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  resText: {
+                    type: "string",
+                  },
+                },
+              },
+            },
+          },
+        },
+        ArrayStringDto: {
+          type: "object",
+          properties: {
+            array: {
+              type: "array",
+              items: {
+                type: "string",
+              },
+            },
+          },
+        },
+        ArrayDeepDto: {
+          type: "object",
+          properties: {
+            array: {
+              type: "array",
+              items: {
+                type: "array",
+                items: {
+                  type: "object",
+                  properties: {
+                    resText: {
+                      type: "string",
+                    },
+                  },
+                },
+              },
             },
           },
         },

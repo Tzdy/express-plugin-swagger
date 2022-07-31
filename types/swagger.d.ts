@@ -28,10 +28,19 @@ declare namespace TySwagger {
   };
 
   type DefineProperty = {
-    type: DataType;
+    type?: DataType;
     example?: any;
     format?: string; // 先不用
     properties?: Record<string, DefineProperty>; // 如果type不是object类型，这个可以为空
+    items?: DefineProperty; // 如果type不是array类型，这个可以为空
+  };
+
+  type DefinePropertyOptions = {
+    type: DataType;
+    example?: any;
+    format?: string; // 先不用
+    items?: DefinePropertyOptions; // 如果type不是array类型，这个可以为空
+    ref?: { new (): {} }; // 如果type是object类型，用来引用其它Dto
   };
 
   type Param = {
