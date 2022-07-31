@@ -1,6 +1,7 @@
 import "reflect-metadata";
 import express, { Router } from "express";
 import { ApiProperty, ExpressSwagger, createSwaggerDoc } from "@/swagger";
+import SwaggerUI from "swagger-ui-express";
 describe("swagger", () => {
   it("generate swaggerDoc", () => {
     class A {
@@ -39,7 +40,9 @@ describe("swagger", () => {
     const app = express();
     const router = Router();
     const deepRouter = Router();
+    const nonePrefixRouter = Router();
     router.use("/deep", deepRouter);
+    router.use(nonePrefixRouter);
     app.use("/api", router);
     deepRouter.get(
       "/info",
@@ -63,6 +66,35 @@ describe("swagger", () => {
     );
 
     app.get(
+      "/get/:id",
+      ExpressSwagger({
+        tags: ["test"],
+        parameter: {
+          in: "path",
+          dto: A,
+        },
+        responses: {
+          "200": {
+            dto: B,
+            description: "如果成功就返回。",
+          },
+          "400": {
+            dto: B,
+            description: "账号或密码输入错误",
+          },
+          "401": {
+            dto: C,
+          },
+        },
+      }),
+      async (req, res) => {
+        res.send({
+          resText: req.params.id,
+        });
+      }
+    );
+
+    nonePrefixRouter.get(
       "/get/:id",
       ExpressSwagger({
         tags: ["test"],
@@ -180,6 +212,25 @@ describe("swagger", () => {
             },
           },
         },
+        "/api/get/{id}": {
+          get: {
+            tags: ["test"],
+            parameters: [{ name: "id", in: "path", type: "string" }],
+            responses: {
+              "200": {
+                description: "如果成功就返回。",
+                schema: { $ref: "#/definitions/B" },
+              },
+              "400": {
+                description: "账号或密码输入错误",
+                schema: { $ref: "#/definitions/B" },
+              },
+              "401": {
+                schema: { $ref: "#/definitions/C" },
+              },
+            },
+          },
+        },
       },
       definitions: {
         A: {
@@ -203,5 +254,7 @@ describe("swagger", () => {
       },
     };
     expect(swaggerDocument).toEqual(result);
+    app.use("/v2", SwaggerUI.serve, SwaggerUI.setup(swaggerDocument));
+    app.listen(10024);
   });
 });

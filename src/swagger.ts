@@ -22,9 +22,11 @@ export function createSwaggerDoc(
   function callback(router: any, base: string) {
     router.stack.forEach((layer: any) => {
       if (layer.name === "router") {
-        const match = (layer.regexp as RegExp).source.match(/^\^\\(.*?)\\/);
+        const match = (layer.regexp as RegExp).source.match(
+          /^\^\\{0,1}(.*?)\\\/{0,1}\?\(\?\=/
+        );
         if (match) {
-          const prefix = match[1];
+          const prefix = match[1].replace(/\\/g, "");
           callback(layer.handle, join(base, prefix));
         }
       } else if (layer.route) {
