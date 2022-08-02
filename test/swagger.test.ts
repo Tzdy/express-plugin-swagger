@@ -73,6 +73,8 @@ describe("swagger", () => {
       array: Array<Array<B>>;
     }
 
+    class EmptyDto {}
+
     const app = express();
     const router = Router();
     const deepRouter = Router();
@@ -137,6 +139,22 @@ describe("swagger", () => {
           resText: req.params.id,
         });
       }
+    );
+
+    app.get(
+      "/empty",
+      ExpressSwagger({
+        tags: ["test"],
+        parameter: {
+          in: "query",
+          dto: EmptyDto,
+        },
+        responses: {
+          200: {
+            dto: EmptyDto,
+          },
+        },
+      })
     );
 
     nonePrefixRouter.get(
@@ -220,6 +238,17 @@ describe("swagger", () => {
         api_key: { type: "apiKey", in: "header", name: "token" },
       },
       paths: {
+        "/empty": {
+          get: {
+            tags: ["test"],
+            parameters: [],
+            responses: {
+              200: {
+                schema: { $ref: "#/definitions/EmptyDto" },
+              },
+            },
+          },
+        },
         "/get/{id}": {
           get: {
             tags: ["test"],
@@ -350,6 +379,10 @@ describe("swagger", () => {
               },
             },
           },
+        },
+        EmptyDto: {
+          type: "object",
+          properties: {},
         },
       },
     };

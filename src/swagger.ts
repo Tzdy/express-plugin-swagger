@@ -66,10 +66,11 @@ export function createSwaggerDoc(
         if (routeOptions.parameter && httpConfig) {
           const parameter = routeOptions.parameter;
           httpConfig.parameters = [];
-          const properties = Reflect.getMetadata(
-            METAKEY_PROPERTY,
-            parameter.dto
-          ) as Record<string, DefineProperty>;
+          const properties =
+            (Reflect.getMetadata(METAKEY_PROPERTY, parameter.dto) as Record<
+              string,
+              DefineProperty
+            >) || {};
           definitions[parameter.dto.name] = {
             type: "object",
             properties,
@@ -99,10 +100,11 @@ export function createSwaggerDoc(
           httpConfig.responses = {};
           Object.keys(responses).forEach((status) => {
             const response = responses[status];
-            const properties = Reflect.getMetadata(
-              METAKEY_PROPERTY,
-              response.dto
-            ) as Record<string, DefineProperty>;
+            const properties =
+              (Reflect.getMetadata(METAKEY_PROPERTY, response.dto) as Record<
+                string,
+                DefineProperty
+              >) || {};
             definitions[response.dto.name] = {
               type: "object",
               properties,
