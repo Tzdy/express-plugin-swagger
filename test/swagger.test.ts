@@ -73,14 +73,37 @@ describe("swagger", () => {
       array: Array<Array<B>>;
     }
 
+    class SuperDto {
+      @ApiProperty({
+        type: "number",
+      })
+      type: number = 1;
+    }
+
+    class SuperSubDto extends SuperDto {
+      @ApiProperty({
+        type: "number",
+      })
+      code: number = 100;
+    }
+
+    class SubDto extends SuperSubDto {
+      @ApiProperty({
+        type: "string",
+      })
+      message: string;
+    }
+
     class EmptyDto {}
 
     const app = express();
     const router = Router();
     const deepRouter = Router();
     const nonePrefixRouter = Router();
+    const superRouter = Router();
     router.use("/deep", deepRouter);
     router.use(nonePrefixRouter);
+    router.use("/super", superRouter);
     app.use("/api", router);
     deepRouter.get(
       "/info",
@@ -186,6 +209,21 @@ describe("swagger", () => {
       }
     );
 
+    superRouter.post(
+      "/super",
+      ExpressSwagger({
+        parameter: {
+          in: "body",
+          dto: SubDto,
+        },
+        responses: {
+          "200": {
+            dto: SubDto,
+          },
+        },
+      })
+    );
+
     const swaggerDocument = createSwaggerDoc(app, {
       swagger: "2.0",
       tags: [
@@ -238,6 +276,22 @@ describe("swagger", () => {
         api_key: { type: "apiKey", in: "header", name: "token" },
       },
       paths: {
+        "/api/super/super": {
+          post: {
+            parameters: [
+              {
+                name: "SubDto",
+                in: "body",
+                schema: { $ref: "#/definitions/SubDto" },
+              },
+            ],
+            responses: {
+              200: {
+                schema: { $ref: "#/definitions/SubDto" },
+              },
+            },
+          },
+        },
         "/empty": {
           get: {
             tags: ["test"],
@@ -316,6 +370,20 @@ describe("swagger", () => {
         },
       },
       definitions: {
+        SubDto: {
+          type: "object",
+          properties: {
+            message: {
+              type: "string",
+            },
+            type: {
+              type: "number",
+            },
+            code: {
+              type: "number",
+            },
+          },
+        },
         A: {
           type: "object",
           properties: { id: { type: "string" } },
